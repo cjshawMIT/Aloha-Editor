@@ -7,95 +7,14 @@
           'ui/ui',
           'ui/button',
           'semanticblock/semanticblock-plugin',
-          './select2',
+          './mc3_lib',
           'css!../../activity/css/activity-plugin.css',
           'css!../../activity/css/select2.css'],
-          function(Aloha, Plugin, jQuery, Ephemera, UI, Button, semanticBlock, select2) {
-    var TYPE_CONTAINER, exampleishClasses, types, mc3_host, mc3_bank;
+          function(Aloha, Plugin, jQuery, Ephemera, UI, Button, semanticBlock, MC3) {
+    var TYPE_CONTAINER, exampleishClasses, types;
     TYPE_CONTAINER = jQuery('<span class="type-container dropdown aloha-ephemera">\n    <span class="type btn-link" href="#" data-toggle="dropdown"></span>\n    <ul class="dropdown-menu">\n    </ul>\n</span>');
     exampleishClasses = {};
     types = [];
-    mc3_host = 'oki-dev.mit.edu';
-    mc3_bank = 'mc3-objectivebank%3A2%40MIT-OEIT';
-    function append_outcomes_selector (parent) {
-        var selector = $('<input />')
-                .addClass('outcome_selector')
-                .attr('type', 'hidden')
-                .attr('value', '');
-        var wrapper = $('<div></div>')
-                .addClass('mc3activity_outcome_link')
-                .append('<span>Link to: </span>');
-        wrapper.append(selector);
-        parent.append(wrapper);
-        return wrapper;
-    }
-
-    function get_objectives_url (key) {
-        var url = 'https://' + mc3_host + '/handcar/services/learning/objectivebanks/' +
-                mc3_bank + '/objectives';
-        if (typeof key !== 'undefined') {
-//            url += '/?proxyname=' + key;
-        }
-        return url
-    }
-
-    function init_outcome_selectors () {
-        var search_term = '';
-        $('.outcome_selector').select2({
-            placeholder: 'Link to an MC3 Learning Outcome',
-            id: function(obj) {return obj.id;},
-            ajax: {
-                url: get_objectives_url(),
-                dataType: 'json',
-                data: function (term, page) {
-                    search_term = term.toLowerCase();
-                    return {
-                        q: term,
-                        page: page
-                    };
-                },
-                results: function(data) {
-                    var counter = data.length;
-                    if (counter > 0) {
-                        var filtered_objs = [];
-                        $.each(data, function(index, obj) {
-                            var obj_name = obj.displayName.text;
-                            obj_name = obj_name.toLowerCase();
-
-                            if (obj_name.indexOf(search_term) >= 0 &&
-                                    obj_is_outcome(obj)) {
-                                filtered_objs.push(obj);
-                            }
-                        });
-                        return {results: filtered_objs};
-                    } else {
-                        var tmp = [{
-                            'displayName': {
-                                'text': 'None Found'
-                            }
-                        }];
-                        return {results: tmp};
-                    }
-                }
-            },
-            formatResult: function(obj) {
-                return obj.displayName.text;
-            },
-            formatSelection: function(obj) {
-                return obj.displayName.text;
-            }
-        });
-    }
-
-    function obj_is_outcome (obj) {
-        var genus = obj.genusTypeId;
-        if (genus === 'mc3-objective%3Amc3.learning.outcome%40MIT-OEIT' ||
-                genus === 'mc3-objective%3Amc3.learning.generic.outcome%40MIT-OEIT') {
-            return true;
-        } else {
-            return false;
-        }
-    }
 
     return Plugin.create('mc3activity', {
       defaults: [
@@ -121,13 +40,12 @@
         }
       ],
       getLabel: function($element) {
-        var type, _i, _len;
-        for (_i = 0, _len = types.length; _i < _len; _i++) {
-          type = types[_i];
-          if ($element.is(type.selector)) {
-            return type.label;
-          }
-        }
+        return 'activity';
+      },
+      options: function ($el) {
+        return {
+            buttons: ['copy']
+        };
       },
       activate: function($element) {
         var $body, $title, label,
@@ -199,8 +117,8 @@
                 .appendTo($element)
                 .aloha()
                 .append($body);
-        append_outcomes_selector($element);
-        init_outcome_selectors();
+        MC3.append_outcomes_selector($element);
+        MC3.init_outcome_selectors();
         return true;
       },
       deactivate: function($element) {
